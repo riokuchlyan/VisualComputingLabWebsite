@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === '/join-us') {
     return NextResponse.redirect(new URL('/opportunities', request.url));
   }
-  // Keep teaching as first-class route; also support legacy /courses
+  // Keep teaching as first-class route; also support legacy /courses 
   if (request.nextUrl.pathname === '/courses') {
     return NextResponse.redirect(new URL('/teaching', request.url));
   }
@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
 
     // Check for authentication token
     const token = request.cookies.get('admin-token')?.value;
-    
+
     if (!token) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
