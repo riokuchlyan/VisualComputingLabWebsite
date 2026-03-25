@@ -90,6 +90,7 @@ export default function RootLayout({
 
   const navItems = [
     { label: "TEAM", href: "/team" },
+    { label: "RESEARCH", href: "/research" },
     { label: "TEACHING", href: "/teaching" },
     { label: "PUBLICATIONS", href: "/publications" },
     { label: "NEWS", href: "/news" },
@@ -142,13 +143,15 @@ export default function RootLayout({
             <Link href="/" className="flex items-center gap-2 md:gap-4 text-white no-underline hover:text-white transition-all duration-500 group flex-1 min-w-0">
               <div className="relative">
                 <div className="absolute inset-0 bg-white/20 rounded-full scale-0 group-hover:scale-150 transition-transform duration-500 -z-10" />
-                <Image
-                  src="/logo.png"
-                  alt="VCAIL Logo"
-                  width={40}
-                  height={40}
-                  className="md:w-12 md:h-12 lg:w-14 lg:h-14 object-contain rounded-full shadow-lg transition-all duration-500 group-hover:scale-110"
-                />
+                <div className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden shadow-lg transition-all duration-500 group-hover:scale-110">
+                  <Image
+                    src="/logo.png"
+                    alt="VCAIL Logo"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover scale-110"
+                  />
+                </div>
               </div>
               <div className="header-title flex-1 min-w-0">
                 <div className="text-xs sm:text-sm md:text-base lg:text-lg font-bold overflow-hidden">

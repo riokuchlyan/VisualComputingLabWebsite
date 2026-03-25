@@ -37,9 +37,9 @@ export default function Teaching() {
       </div>
 
       {/* Teaching Philosophy - Orange translucent banner */}
-      <div className="w-full bg-orange/20 backdrop-blur-sm py-3 mb-8">
+      <div className="w-full bg-campus-sandstone backdrop-blur-sm py-3 mb-8">
         <div className="max-w-7xl mx-auto px-4 md:px-12">
-          <h2 className="text-2xl font-bold text-orange text-center mb-3">TEACHING</h2>
+          <h2 className="text-2xl font-bold text-dome-copper text-center mb-3">TEACHING</h2>
           <p className="text-md text-center text-neutral-700 max-w-4xl mx-auto leading-relaxed">
             We are committed to excellence in education, fostering the next generation of visual computing researchers and practitioners. 
             Our courses blend theory with hands-on experience in cutting-edge technologies.
