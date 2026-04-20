@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import Cookies from 'js-cookie';
-import { AdminUser, verifyAdminToken } from '@/lib/auth';
+import { AdminUser } from '@/lib/auth';
 
 interface AuthContextType {
   user: AdminUser | null;
@@ -19,15 +19,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = Cookies.get('admin-token');
-    if (token) {
-      const user = verifyAdminToken(token);
-      if (user) {
-        setUser(user);
-      } else {
-        Cookies.remove('admin-token');
-      }
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
+    fetch('/api/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setUser(data.user);
+        } else {
+          Cookies.remove('admin-token');
+        }
+      })
+      .catch(() => Cookies.remove('admin-token'))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
