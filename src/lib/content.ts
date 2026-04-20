@@ -1,5 +1,4 @@
-import fs from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
 export interface WebsiteContent {
   homepage: {
@@ -27,47 +26,7 @@ export interface WebsiteContent {
   };
 }
 
-const CONTENT_FILE_PATH = path.join(process.cwd(), 'src/data/content.json');
-
-export async function getWebsiteContent(): Promise<WebsiteContent> {
-  try {
-    const fileContent = fs.readFileSync(CONTENT_FILE_PATH, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error('Error reading website content:', error);
-    // Return default content if file doesn't exist
-    return getDefaultContent();
-  }
-}
-
-export async function updateWebsiteContent(updates: Partial<WebsiteContent>): Promise<boolean> {
-  try {
-    const currentContent = await getWebsiteContent();
-    const updatedContent = { ...currentContent, ...updates };
-    
-    fs.writeFileSync(CONTENT_FILE_PATH, JSON.stringify(updatedContent, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error updating website content:', error);
-    return false;
-  }
-}
-
-export async function updateHomepageContent(updates: Partial<WebsiteContent['homepage']>): Promise<boolean> {
-  try {
-    const currentContent = await getWebsiteContent();
-    const updatedContent = {
-      ...currentContent,
-      homepage: { ...currentContent.homepage, ...updates }
-    };
-    
-    fs.writeFileSync(CONTENT_FILE_PATH, JSON.stringify(updatedContent, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Error updating homepage content:', error);
-    return false;
-  }
-}
+const KV_KEY = 'website:content';
 
 function getDefaultContent(): WebsiteContent {
   return {
@@ -95,4 +54,66 @@ function getDefaultContent(): WebsiteContent {
       keywords: "visual computing, augmented intelligence, UNC, Chapel Hill, computational imaging, computer vision, AR, VR, nano-optics, research, Praneeth Chakravarthula"
     }
   };
+}
+
+export async function getWebsiteContent(): Promise<WebsiteContent> {
+  try {
+    const stored = await kv.get<WebsiteContent>(KV_KEY);
+    if (stored) return stored;
+    // First run: seed from defaults
+    const defaults = getDefaultContent();
+    await kv.set(KV_KEY, defaults);
+    return defaults;
+  } catch (error) {
+    console.error('Error reading website content from KV:', error);
+    return getDefaultContent();
+  }
+}
+
+export async function updateWebsiteContent(updates: Partial<WebsiteContent>): Promise<boolean> {
+  try {
+    const current = await getWebsiteContent();
+    const updated: WebsiteContent = {
+      homepage: { ...current.homepage, ...(updates.homepage ?? {}) },
+      footer: {
+        ...current.footer,
+        ...(updates.footer ?? {}),
+        socialLinks: {
+          ...current.footer.socialLinks,
+          ...(updates.footer?.socialLinks ?? {})
+        }
+      },
+      meta: { ...current.meta, ...(updates.meta ?? {}) }
+    };
+    await kv.set(KV_KEY, updated);
+    return true;
+  } catch (error) {
+    console.error('Error updating website content in KV:', error);
+    return false;
+  }
+}
+
+export async function updateHomepageContent(updates: Partial<WebsiteContent['homepage']>): Promise<boolean> {
+  try {
+    const current = await getWebsiteContent();
+    const updated: WebsiteContent = {
+      ...current,
+      homepage: { ...current.homepage, ...updates }
+    };
+    await kv.set(KV_KEY, updated);
+    return true;
+  } catch (error) {
+    console.error('Error updating homepage content in KV:', error);
+    return false;
+  }
+}
+
+export async function seedContentFromJson(data: WebsiteContent): Promise<boolean> {
+  try {
+    await kv.set(KV_KEY, data);
+    return true;
+  } catch (error) {
+    console.error('Error seeding content into KV:', error);
+    return false;
+  }
 }

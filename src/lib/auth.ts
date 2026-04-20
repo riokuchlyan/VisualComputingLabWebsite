@@ -23,28 +23,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-producti
 
 export async function validateAdminCredentials(email: string, password: string): Promise<AdminUser | null> {
   try {
-    console.log('Validating credentials for:', email);
-    console.log('Expected email:', ADMIN_CREDENTIALS.email);
-    console.log('Email match:', email === ADMIN_CREDENTIALS.email);
-    
     if (email !== ADMIN_CREDENTIALS.email) {
-      console.log('Email mismatch, returning null');
       return null;
     }
 
-    console.log('Comparing password with hash...');
-    console.log('Password:', password);
-    console.log('Hash:', ADMIN_CREDENTIALS.passwordHash);
-    
     const isValid = await bcrypt.compare(password, ADMIN_CREDENTIALS.passwordHash);
-    console.log('Password validation result:', isValid);
-    
     if (!isValid) {
-      console.log('Password invalid, returning null');
       return null;
     }
 
-    console.log('Authentication successful');
     return {
       id: ADMIN_CREDENTIALS.id,
       email: ADMIN_CREDENTIALS.email,
@@ -85,28 +72,40 @@ export function verifyAdminToken(token: string): AdminUser | null {
   }
 }
 
-// Edge Runtime compatible JWT verification for proxy
+// Edge Runtime compatible JWT verification using Web Crypto API
 export async function verifyAdminTokenEdge(token: string): Promise<AdminUser | null> {
   try {
-    // Simple JWT parsing without crypto verification for Edge Runtime
-    // This is less secure but works in Edge Runtime
     const parts = token.split('.');
-    if (parts.length !== 3) {
-      return null;
-    }
+    if (parts.length !== 3) return null;
 
-    // Decode the payload
+    const secret = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+
+    const signatureInput = `${parts[0]}.${parts[1]}`;
+    const signatureBytes = Uint8Array.from(
+      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
+      c => c.charCodeAt(0)
+    );
+
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBytes,
+      new TextEncoder().encode(signatureInput)
+    );
+
+    if (!valid) return null;
+
     const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    
-    // Check if token is expired
-    if (payload.exp && payload.exp < Date.now() / 1000) {
-      return null;
-    }
 
-    // Validate required fields
-    if (!payload.id || !payload.email || !payload.role || payload.role !== 'admin') {
-      return null;
-    }
+    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    if (!payload.id || !payload.email || !payload.role || payload.role !== 'admin') return null;
 
     return {
       id: payload.id,

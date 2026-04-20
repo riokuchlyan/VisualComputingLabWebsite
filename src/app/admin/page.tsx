@@ -28,6 +28,10 @@ export default function AdminDashboard() {
     router.push('/admin/login');
   }, [logout, router]);
 
+  const handleExport = useCallback(() => {
+    window.location.href = '/api/export';
+  }, []);
+
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/admin/login');
@@ -136,6 +140,19 @@ export default function AdminDashboard() {
                   <p className="text-2xl font-bold text-carolina-blue">4</p>
                   <p className="text-sm text-gray-600 mt-1">Faculty & students</p>
                 </div>
+              </div>
+
+              <div className="mt-8 bg-white p-6 rounded-lg shadow">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Data Backup</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Download a full JSON export of all website content, publications, and research data.
+                </p>
+                <button
+                  onClick={handleExport}
+                  className="bg-unc-navy hover:bg-carolina-blue text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Export All Data
+                </button>
               </div>
             </div>
           )}
