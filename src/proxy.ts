@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminTokenEdge } from '@/lib/auth';
+import { verifyAdminTokenEdge } from '@/lib/auth-edge';
 
 export async function proxy(request: NextRequest) {
   // Public redirects for renamed sections
