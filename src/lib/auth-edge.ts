@@ -1,10 +1,11 @@
 import { AdminUser } from './auth';
 
 // atob requires standard base64 with padding; JWT uses base64url without padding.
-function base64urlToBuffer(str: string): Uint8Array {
+function base64urlToBuffer(str: string): Uint8Array<ArrayBuffer> {
   const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
   const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
-  return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+  const bytes = Array.from(atob(padded), c => c.charCodeAt(0));
+  return new Uint8Array(new ArrayBuffer(bytes.length)).map((_, i) => bytes[i]);
 }
 
 // Edge Runtime compatible JWT verification using Web Crypto API
