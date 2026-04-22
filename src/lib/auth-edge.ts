@@ -1,5 +1,12 @@
 import { AdminUser } from './auth';
 
+// atob requires standard base64 with padding; JWT uses base64url without padding.
+function base64urlToBuffer(str: string): Uint8Array {
+  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+  return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+
 // Edge Runtime compatible JWT verification using Web Crypto API
 // Kept separate from auth.ts to avoid pulling bcryptjs/jsonwebtoken into Edge bundles
 export async function verifyAdminTokenEdge(token: string): Promise<AdminUser | null> {
@@ -17,10 +24,7 @@ export async function verifyAdminTokenEdge(token: string): Promise<AdminUser | n
     );
 
     const signatureInput = `${parts[0]}.${parts[1]}`;
-    const signatureBytes = Uint8Array.from(
-      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
-      c => c.charCodeAt(0)
-    );
+    const signatureBytes = base64urlToBuffer(parts[2]);
 
     const valid = await crypto.subtle.verify(
       'HMAC',
@@ -31,7 +35,7 @@ export async function verifyAdminTokenEdge(token: string): Promise<AdminUser | n
 
     if (!valid) return null;
 
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(new TextDecoder().decode(base64urlToBuffer(parts[1])));
     if (payload.exp && payload.exp < Date.now() / 1000) return null;
     if (!payload.id || !payload.email || !payload.role || payload.role !== 'admin') return null;
 
