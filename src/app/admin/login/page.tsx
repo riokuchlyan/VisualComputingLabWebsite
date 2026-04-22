@@ -24,9 +24,7 @@ export default function AdminLogin() {
     setError('');
 
     const success = await login(email, password);
-    if (success) {
-      router.push('/admin');
-    } else {
+    if (!success) {
       setError('Invalid email or password');
     }
     setIsLoading(false);
